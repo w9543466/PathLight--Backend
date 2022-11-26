@@ -24,9 +24,9 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
-                    auth.antMatchers("/worker").authenticated();
-                    auth.antMatchers("/employer").authenticated();
-                    auth.antMatchers("/admin").authenticated();
+                    auth.antMatchers("/worker/*").authenticated();
+                    auth.antMatchers("/employer/*").authenticated();
+                    auth.antMatchers("/admin/*").authenticated();
                     auth.antMatchers("/").permitAll();
                 })
                 .httpBasic(Customizer.withDefaults())

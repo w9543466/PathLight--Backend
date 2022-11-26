@@ -3,9 +3,9 @@ package uk.ac.tees.w9543466.pathlight.auth.dto;
 import javax.validation.constraints.NotBlank;
 
 public class LoginRequest {
-    @NotBlank(message = "First name is mandatory")
+    @NotBlank(message = "Email is mandatory")
     private String email;
-    @NotBlank(message = "First name is mandatory")
+    @NotBlank(message = "Password is required")
     private String password;
 
     @NotBlank(message = "Role is mandatory")

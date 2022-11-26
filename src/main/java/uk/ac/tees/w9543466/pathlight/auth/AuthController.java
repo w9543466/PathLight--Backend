@@ -12,25 +12,27 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import uk.ac.tees.w9543466.pathlight.BaseController;
 import uk.ac.tees.w9543466.pathlight.BaseResponse;
+import uk.ac.tees.w9543466.pathlight.ErrorCode;
 import uk.ac.tees.w9543466.pathlight.UserRole;
 import uk.ac.tees.w9543466.pathlight.auth.dto.LoginRequest;
 import uk.ac.tees.w9543466.pathlight.auth.dto.RegisterRequest;
-import uk.ac.tees.w9543466.pathlight.employer.Employer;
 import uk.ac.tees.w9543466.pathlight.auth.entities.Roles;
 import uk.ac.tees.w9543466.pathlight.auth.entities.User;
-import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
 import uk.ac.tees.w9543466.pathlight.auth.repo.AuthRepo;
-import uk.ac.tees.w9543466.pathlight.employer.EmployerRepo;
 import uk.ac.tees.w9543466.pathlight.auth.repo.RoleRepo;
-import uk.ac.tees.w9543466.pathlight.worker.WorkerRepo;
+import uk.ac.tees.w9543466.pathlight.employer.entity.Employer;
+import uk.ac.tees.w9543466.pathlight.employer.repo.EmployerRepo;
+import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
+import uk.ac.tees.w9543466.pathlight.worker.repo.WorkerRepo;
 
 import javax.validation.Valid;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-public class AuthController {
+public class AuthController extends BaseController {
 
     @Autowired
     private AuthRepo authRepo;
@@ -64,16 +66,12 @@ public class AuthController {
         }
 
         String email = request.getEmail();
-        if (email == null) {
-            return BaseResponse.fail("Email shouldn't be empty", HttpStatus.BAD_REQUEST);
-        }
-
         Optional<User> userWithEmail = authRepo.findByEmail(email);
         if (userWithEmail.isPresent()) {
             var currentRoles = roleRepo.findByUserId(userWithEmail.get().getEmail());
             var roles = currentRoles.stream().map(Roles::getRole).collect(Collectors.joining());
             if (roles.contains(role)) {
-                return BaseResponse.fail("User already exists!", HttpStatus.BAD_REQUEST);
+                return BaseResponse.fail("User already exists!", ErrorCode.ALREADY_EXISTS, HttpStatus.CONFLICT);
             }
         }
 
@@ -94,7 +92,6 @@ public class AuthController {
             }
             return BaseResponse.success("New role assigned to user", HttpStatus.CREATED);
         }
-
 
         User user = new User();
         user.setEmail(email);

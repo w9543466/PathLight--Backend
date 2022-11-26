@@ -11,6 +11,7 @@ public class BaseResponse<T> {
     private T data;
     private boolean success;
     private String message;
+    private ErrorCode errorCode;
     private List<String> errors;
 
     public BaseResponse(T data, boolean success) {
@@ -54,6 +55,14 @@ public class BaseResponse<T> {
         this.message = message;
     }
 
+    public String getErrorCode() {
+        return errorCode == null ? null : errorCode.getCode();
+    }
+
+    public void setErrorCode(ErrorCode errorCode) {
+        this.errorCode = errorCode;
+    }
+
     public T getData() {
         return data;
     }
@@ -62,8 +71,16 @@ public class BaseResponse<T> {
         this.data = data;
     }
 
-    public static ResponseEntity<BaseResponse<Void>> fail(String msg, HttpStatus status) {
-        return new ResponseEntity<>(new BaseResponse<>(false, msg), status);
+    public static <T> ResponseEntity<BaseResponse<T>> fail(String msg, HttpStatus status) {
+        return fail(msg, null, status);
+    }
+
+    public static <T> ResponseEntity<BaseResponse<T>> fail(String msg, ErrorCode errorCode, HttpStatus status) {
+        BaseResponse<T> response = new BaseResponse<>(false, msg);
+        if (errorCode != null) {
+            response.setErrorCode(errorCode);
+        }
+        return new ResponseEntity<>(response, status);
     }
 
     public static ResponseEntity<BaseResponse<Void>> success(String msg, HttpStatus status) {

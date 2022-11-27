@@ -141,7 +141,7 @@ public class RegisterRequest {
     }
 
     public String getRole() {
-        return userRole;
+        return "ROLE_" + userRole;
     }
 
     public void setRole(String role) {

@@ -18,7 +18,7 @@ public class WorkDto {
     private double startTime;
     private double workDuration;
     private double workDurationUnit;
-    private double ratePerHour;
+    private double totalRate;
     private String status;
 
     public long getWorkId() {
@@ -93,12 +93,12 @@ public class WorkDto {
         this.workDuration = workDuration;
     }
 
-    public double getRatePerHour() {
-        return ratePerHour;
+    public double getTotalRate() {
+        return totalRate;
     }
 
-    public void setRatePerHour(double ratePerHour) {
-        this.ratePerHour = ratePerHour;
+    public void setTotalRate(double totalRate) {
+        this.totalRate = totalRate;
     }
 
     public String getStatus() {

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +29,7 @@ import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
 import uk.ac.tees.w9543466.pathlight.worker.repo.WorkerRepo;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -49,7 +51,12 @@ public class AuthController extends BaseController {
 
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<Void>> login(@Valid @RequestBody LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(request.getRole());
+        ArrayList<SimpleGrantedAuthority> arrayList = new ArrayList<>();
+        arrayList.add(authority);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword(), arrayList)
+        );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         if (authentication.isAuthenticated()) {
             return BaseResponse.ok("User signed-in successfully!.");

@@ -21,25 +21,17 @@ public class Work {
     @CreationTimestamp
     private Instant createdDate;
     @Column(name = "expiry_date")
-    private double expiryDate;
+    private long expiryDate;
     @Column(name = "start_time")
-    private double startTime;
+    private long startTime;
     @Column(name = "work_duration")
     private double workDuration;
     @Column(name = "work_duration_unit")
     private double workDurationUnit;
-    @Column(name = "rate_per_hour")
-    private double ratePerHour;
+    @Column(name = "total_rate")
+    private double totalRate;
     private String status;
     private String createdBy;
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
 
     public Long getId() {
         return id;
@@ -81,27 +73,27 @@ public class Work {
         this.lng = lng;
     }
 
-    public Instant getCreatedDate() {
-        return createdDate;
+    public long getCreatedDate() {
+        return createdDate.toEpochMilli();
     }
 
     public void setCreatedDate(Instant createdDate) {
         this.createdDate = createdDate;
     }
 
-    public double getExpiryDate() {
+    public long getExpiryDate() {
         return expiryDate;
     }
 
-    public void setExpiryDate(double expiryDate) {
+    public void setExpiryDate(long expiryDate) {
         this.expiryDate = expiryDate;
     }
 
-    public double getStartTime() {
+    public long getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(double startTime) {
+    public void setStartTime(long startTime) {
         this.startTime = startTime;
     }
 
@@ -121,12 +113,12 @@ public class Work {
         this.workDurationUnit = workDurationUnit;
     }
 
-    public double getRatePerHour() {
-        return ratePerHour;
+    public double getTotalRate() {
+        return totalRate;
     }
 
-    public void setRatePerHour(double ratePerHour) {
-        this.ratePerHour = ratePerHour;
+    public void setTotalRate(double totalRate) {
+        this.totalRate = totalRate;
     }
 
     public String getStatus() {
@@ -135,5 +127,13 @@ public class Work {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }

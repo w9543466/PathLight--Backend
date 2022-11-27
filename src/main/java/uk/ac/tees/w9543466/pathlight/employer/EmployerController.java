@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import uk.ac.tees.w9543466.pathlight.BaseController;
 import uk.ac.tees.w9543466.pathlight.BaseResponse;
 import uk.ac.tees.w9543466.pathlight.employer.dto.WorkDto;
+import uk.ac.tees.w9543466.pathlight.employer.entity.Employer;
 import uk.ac.tees.w9543466.pathlight.employer.entity.Work;
 import uk.ac.tees.w9543466.pathlight.employer.repo.EmployerRepo;
 import uk.ac.tees.w9543466.pathlight.employer.repo.WorkRepo;
 import uk.ac.tees.w9543466.pathlight.worker.dto.ProfileResponse;
-import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
@@ -34,7 +34,7 @@ public class EmployerController extends BaseController {
     @GetMapping("/profile")
     public ResponseEntity<BaseResponse<ProfileResponse>> getProfile() {
         String email = getUserEmail();
-        Worker employer = employerRepo.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("No employer found with provided email"));
+        Employer employer = employerRepo.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("No employer found with provided email"));
         var response = mapper.map(employer, ProfileResponse.class);
         return BaseResponse.ok(response);
     }
@@ -56,14 +56,6 @@ public class EmployerController extends BaseController {
         return BaseResponse.success("Work created", HttpStatus.CREATED);
     }
 
-    @GetMapping("/works")
-    public ResponseEntity<BaseResponse<List<WorkDto>>> getWorks() {
-        var email = getUserEmail();
-        var works = workRepo.findByCreatedBy(email);
-        var workList = mapper.map(works, WorkDto[].class);
-        return BaseResponse.ok(Arrays.asList(workList));
-    }
-
     @DeleteMapping("/work")
     public ResponseEntity<BaseResponse<Void>> cancelWork(@RequestParam long workId) {
         var email = getUserEmail();
@@ -83,5 +75,13 @@ public class EmployerController extends BaseController {
         workEntity.setStatus(status);
         workRepo.save(workEntity);
         return BaseResponse.ok("Work updated");
+    }
+
+    @GetMapping("/works")
+    public ResponseEntity<BaseResponse<List<WorkDto>>> getWorks() {
+        var email = getUserEmail();
+        var works = workRepo.findByCreatedBy(email);
+        var workList = mapper.map(works, WorkDto[].class);
+        return BaseResponse.ok(Arrays.asList(workList));
     }
 }

@@ -23,10 +23,11 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.antMatchers("/worker/**/*").hasRole("WORKER").antMatchers().authenticated()
-                        .antMatchers("/employer/**/*").hasRole("EMPLOYER").antMatchers().authenticated()
-                        .antMatchers("/admin/**/*").hasRole("ADMIN").antMatchers().authenticated()
-                        .antMatchers("/").permitAll())
+                .authorizeHttpRequests(auth ->
+                        auth.antMatchers("/worker/**/*").hasRole("WORKER").antMatchers().authenticated()
+                                .antMatchers("/employer/**/*").hasRole("EMPLOYER").antMatchers().authenticated()
+                                .antMatchers("/admin/**/*").hasRole("ADMIN").antMatchers().authenticated()
+                                .antMatchers("/").permitAll())
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }

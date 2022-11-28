@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,8 +18,9 @@ import uk.ac.tees.w9543466.pathlight.BaseController;
 import uk.ac.tees.w9543466.pathlight.BaseResponse;
 import uk.ac.tees.w9543466.pathlight.ErrorCode;
 import uk.ac.tees.w9543466.pathlight.UserRole;
+import uk.ac.tees.w9543466.pathlight.auth.dto.EmployerRegisterRequest;
 import uk.ac.tees.w9543466.pathlight.auth.dto.LoginRequest;
-import uk.ac.tees.w9543466.pathlight.auth.dto.RegisterRequest;
+import uk.ac.tees.w9543466.pathlight.auth.dto.WorkerRegisterRequest;
 import uk.ac.tees.w9543466.pathlight.auth.entities.Roles;
 import uk.ac.tees.w9543466.pathlight.auth.entities.User;
 import uk.ac.tees.w9543466.pathlight.auth.repo.AuthRepo;
@@ -49,6 +51,11 @@ public class AuthController extends BaseController {
     @Autowired
     private PasswordEncoder pwdEncoder;
 
+    @GetMapping("/")
+    public ResponseEntity<BaseResponse<Void>> check() {
+        return BaseResponse.ok("Hit");
+    }
+
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<Void>> login(@Valid @RequestBody LoginRequest request) {
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority(request.getRole());
@@ -65,13 +72,9 @@ public class AuthController extends BaseController {
         }
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<BaseResponse<Void>> registerUser(@Valid @RequestBody RegisterRequest request) {
-        String role = request.getRole();
-        if (!role.equalsIgnoreCase(UserRole.EMPLOYER.getRole()) && !role.equalsIgnoreCase(UserRole.WORKER.getRole())) {
-            return BaseResponse.fail("Only EMPLOYER and WORKER user type is supported!", HttpStatus.BAD_REQUEST);
-        }
-
+    @PostMapping("/signup/worker")
+    public ResponseEntity<BaseResponse<Void>> registerWorker(@Valid @RequestBody WorkerRegisterRequest request) {
+        var role = UserRole.WORKER.getRole();
         String email = request.getEmail();
         Optional<User> userWithEmail = authRepo.findByEmail(email);
         if (userWithEmail.isPresent()) {
@@ -80,45 +83,51 @@ public class AuthController extends BaseController {
             if (roles.contains(role)) {
                 return BaseResponse.fail("User already exists!", ErrorCode.ALREADY_EXISTS, HttpStatus.CONFLICT);
             }
+            upsertRole(userWithEmail.get().getEmail(), role);
+            return BaseResponse.success("New role " + role + " assigned to user", HttpStatus.CREATED);
         }
-
-        if (role.equalsIgnoreCase(UserRole.WORKER.getRole())) {
-            var worker = new ModelMapper().map(request, Worker.class);
-            workerRepo.save(worker);
-        } else if (role.equalsIgnoreCase(UserRole.EMPLOYER.getRole())) {
-            var worker = new ModelMapper().map(request, Employer.class);
-            employerRepo.save(worker);
-        } else {
-            return BaseResponse.fail("Unknown user role", HttpStatus.BAD_REQUEST);
-        }
-
-        if (userWithEmail.isPresent()) {
-            var existingUser = userWithEmail.get();
-            if (!upsertRole(existingUser.getEmail(), role)) {
-                return BaseResponse.fail("Unknown user role", HttpStatus.BAD_REQUEST);
-            }
-            return BaseResponse.success("New role assigned to user", HttpStatus.CREATED);
-        }
+        var worker = new ModelMapper().map(request, Worker.class);
+        workerRepo.save(worker);
 
         User user = new User();
         user.setEmail(email);
         user.setPassword(pwdEncoder.encode(request.getPassword()));
         var createdUser = authRepo.save(user);
-        if (!upsertRole(createdUser.getEmail(), role)) {
-            return BaseResponse.fail("Unknown user role", HttpStatus.BAD_REQUEST);
-        }
-        return BaseResponse.success("User registered successfully", HttpStatus.CREATED);
+        upsertRole(createdUser.getEmail(), role);
+        return BaseResponse.success("User registered successfully as worker", HttpStatus.CREATED);
     }
 
-    private boolean upsertRole(String userId, String role) {
+    @PostMapping("/signup/employer")
+    public ResponseEntity<BaseResponse<Void>> registerEmployer(@Valid @RequestBody EmployerRegisterRequest request) {
+        var role = UserRole.EMPLOYER.getRole();
+        String email = request.getEmail();
+        Optional<User> userWithEmail = authRepo.findByEmail(email);
+        if (userWithEmail.isPresent()) {
+            var existingUser = userWithEmail.get();
+            String existingUserEmail = existingUser.getEmail();
+            var currentRoles = roleRepo.findByUserId(existingUserEmail);
+            var roles = currentRoles.stream().map(Roles::getRole).collect(Collectors.joining());
+            if (roles.contains(role)) {
+                return BaseResponse.fail("User already exists!", ErrorCode.ALREADY_EXISTS, HttpStatus.CONFLICT);
+            }
+            upsertRole(existingUserEmail, role);
+            return BaseResponse.success("New role " + role + " assigned to user", HttpStatus.CREATED);
+        }
+        var worker = new ModelMapper().map(request, Employer.class);
+        employerRepo.save(worker);
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(pwdEncoder.encode(request.getPassword()));
+        var createdUser = authRepo.save(user);
+        upsertRole(createdUser.getEmail(), role);
+        return BaseResponse.success("User registered successfully as employer", HttpStatus.CREATED);
+    }
+
+    private void upsertRole(String userId, String role) {
         var newRole = new Roles();
         newRole.setUserId(userId);
-        if (role.equalsIgnoreCase(UserRole.EMPLOYER.getRole())) {
-            newRole.setRole(UserRole.EMPLOYER.getRole());
-        } else if (role.equalsIgnoreCase(UserRole.WORKER.getRole())) {
-            newRole.setRole(UserRole.WORKER.getRole());
-        } else return false;
+        newRole.setRole("ROLE_" + role);
         roleRepo.save(newRole);
-        return true;
     }
 }

@@ -1,0 +1,19 @@
+server:
+  port: ${PORT:8081}
+
+security:
+  basic:
+    enabled: false
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: POSTGRESQL
+    show-sql: true
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://localhost:5432/pathlight
+    username: w9543466
+    password: f3oihubfo384t
+    driverClassName: org.postgresql.Driver

@@ -2,7 +2,7 @@ package uk.ac.tees.w9543466.pathlight.auth.dto;
 
 import javax.validation.constraints.NotBlank;
 
-public class RegisterRequest {
+public class WorkerRegisterRequest {
     @NotBlank(message = "First name is mandatory")
     private String firstName;
     @NotBlank(message = "Last name is mandatory")
@@ -23,9 +23,8 @@ public class RegisterRequest {
     private String languages;
     private String gender;
     private String profileSummary;
-    @NotBlank(message = "Role is mandatory")
-    private String userRole;
 
+    @NotBlank(message = "Password is required")
     private String password;
 
     public String getPassword() {
@@ -34,14 +33,6 @@ public class RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getUserRole() {
-        return userRole;
-    }
-
-    public void setUserRole(String userRole) {
-        this.userRole = userRole;
     }
 
     public String getFirstName() {
@@ -138,13 +129,5 @@ public class RegisterRequest {
 
     public void setProfileSummary(String profileSummary) {
         this.profileSummary = profileSummary;
-    }
-
-    public String getRole() {
-        return "ROLE_" + userRole;
-    }
-
-    public void setRole(String role) {
-        this.userRole = role;
     }
 }

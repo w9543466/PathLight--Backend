@@ -8,5 +8,9 @@ import java.util.List;
 public interface ApplicationRepo extends JpaRepository<Application, Long> {
     boolean existsByWorkerId(Long workerId);
 
+    boolean existsByWorkIdAndWorkerId(Long workId, Long workerId);
+
     List<Application> findAllByWorkerId(long workerId);
+
+    List<Application> findAllByWorkId(long workId);
 }

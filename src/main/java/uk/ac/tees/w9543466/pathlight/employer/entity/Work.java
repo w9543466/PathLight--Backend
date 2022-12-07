@@ -1,6 +1,7 @@
 package uk.ac.tees.w9543466.pathlight.employer.entity;
 
 import org.hibernate.annotations.CreationTimestamp;
+import uk.ac.tees.w9543466.pathlight.WorkStatus;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -20,17 +21,11 @@ public class Work {
     @Column(name = "created_date")
     @CreationTimestamp
     private Instant createdDate;
-    @Column(name = "expiry_date")
-    private long expiryDate;
     @Column(name = "start_time")
     private long startTime;
-    @Column(name = "work_duration")
-    private double workDuration;
-    @Column(name = "work_duration_unit")
-    private double workDurationUnit;
     @Column(name = "total_rate")
     private double totalRate;
-    private String status;
+    private WorkStatus status;
     private String createdBy;
 
     public Long getId() {
@@ -81,36 +76,12 @@ public class Work {
         this.createdDate = createdDate;
     }
 
-    public long getExpiryDate() {
-        return expiryDate;
-    }
-
-    public void setExpiryDate(long expiryDate) {
-        this.expiryDate = expiryDate;
-    }
-
     public long getStartTime() {
         return startTime;
     }
 
     public void setStartTime(long startTime) {
         this.startTime = startTime;
-    }
-
-    public double getWorkDuration() {
-        return workDuration;
-    }
-
-    public void setWorkDuration(double workDuration) {
-        this.workDuration = workDuration;
-    }
-
-    public double getWorkDurationUnit() {
-        return workDurationUnit;
-    }
-
-    public void setWorkDurationUnit(double workDurationUnit) {
-        this.workDurationUnit = workDurationUnit;
     }
 
     public double getTotalRate() {
@@ -121,11 +92,11 @@ public class Work {
         this.totalRate = totalRate;
     }
 
-    public String getStatus() {
+    public WorkStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(WorkStatus status) {
         this.status = status;
     }
 

@@ -84,7 +84,7 @@ public class WorkerController extends BaseController {
         }
     }
 
-    @GetMapping("works/application")
+    @GetMapping("/works/application")
     public ResponseEntity<BaseResponse<List<Optional<Work>>>> getApplications() {
         var worker = getLoggedInWorker();
         var workerId = worker.getId();
@@ -93,13 +93,13 @@ public class WorkerController extends BaseController {
         return BaseResponse.ok(result.collect(Collectors.toList()));
     }
 
-    @PostMapping("works/application")
+    @PostMapping("/works/application")
     public ResponseEntity<BaseResponse<Void>> applyForWork(@Valid @RequestBody WorkApplicationRequest request) {
         var workId = request.getWorkId();
         var rate = request.getProposedRate();
         var worker = getLoggedInWorker();
         Long workerId = worker.getId();
-        var alreadyApplied = applicationRepo.existsByWorkerId(workerId);
+        var alreadyApplied = applicationRepo.existsByWorkIdAndWorkerId(workId, workerId);
         if (alreadyApplied) {
             return BaseResponse.fail("You have already applied for this work", ErrorCode.ALREADY_EXISTS, HttpStatus.FORBIDDEN);
         }

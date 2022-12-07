@@ -1,27 +1,18 @@
-package uk.ac.tees.w9543466.pathlight.worker.entity;
+package uk.ac.tees.w9543466.pathlight.employer.dto;
 
-import org.hibernate.annotations.CreationTimestamp;
 import uk.ac.tees.w9543466.pathlight.ApplicationStatus;
+import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
 
-import javax.persistence.*;
 import java.time.Instant;
 
-@Entity(name = "application")
-public class Application {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+public class ApplicationItemDto {
     private Long id;
-    @Column(name = "worker_id")
     private Long workerId;
-    @Column(name = "work_id")
     private Long workId;
-    @Column(name = "proposed_rate")
     private Double rate;
-    @Column(name = "status")
     private ApplicationStatus applicationStatus;
-    @Column(name = "created_date")
-    @CreationTimestamp
     private Instant createdDate;
+    private Worker worker;
 
     public Long getId() {
         return id;
@@ -63,8 +54,16 @@ public class Application {
         this.applicationStatus = applicationStatus;
     }
 
-    public Instant getCreatedDate() {
-        return createdDate;
+    public Worker getWorker() {
+        return worker;
+    }
+
+    public void setWorker(Worker worker) {
+        this.worker = worker;
+    }
+
+    public long getCreatedDate() {
+        return createdDate.toEpochMilli();
     }
 
     public void setCreatedDate(Instant createdDate) {

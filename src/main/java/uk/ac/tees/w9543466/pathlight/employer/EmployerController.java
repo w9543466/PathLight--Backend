@@ -104,7 +104,7 @@ public class EmployerController extends BaseController {
     @GetMapping("/work/{workId}/application")
     public ResponseEntity<BaseResponse<ApplicationResponse>> getApplications(@PathVariable(name = "workId") long workId) {
         var email = getUserEmail();
-        var work = workRepo.findByCreatedByAndId(email, workId).orElseThrow(() -> new EntityNotFoundException("Work not found for this user"));
+        var work = workRepo.findByCreatedByAndId(email, workId).orElseThrow(() -> new EntityNotFoundException("Work not found for the given workId"));
         var list = applicationRepo.findAllByWorkId(work.getId());
         var result = new ArrayList<ApplicationItemDto>();
         for (Application application : list) {

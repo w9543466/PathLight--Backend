@@ -9,11 +9,11 @@ import uk.ac.tees.w9543466.pathlight.ApplicationStatus;
 import uk.ac.tees.w9543466.pathlight.BaseController;
 import uk.ac.tees.w9543466.pathlight.BaseResponse;
 import uk.ac.tees.w9543466.pathlight.ErrorCode;
+import uk.ac.tees.w9543466.pathlight.employer.entity.Employer;
 import uk.ac.tees.w9543466.pathlight.employer.entity.Work;
+import uk.ac.tees.w9543466.pathlight.employer.repo.EmployerRepo;
 import uk.ac.tees.w9543466.pathlight.employer.repo.WorkRepo;
-import uk.ac.tees.w9543466.pathlight.worker.dto.PreferenceDto;
-import uk.ac.tees.w9543466.pathlight.worker.dto.ProfileResponse;
-import uk.ac.tees.w9543466.pathlight.worker.dto.WorkApplicationRequest;
+import uk.ac.tees.w9543466.pathlight.worker.dto.*;
 import uk.ac.tees.w9543466.pathlight.worker.entity.Application;
 import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
 import uk.ac.tees.w9543466.pathlight.worker.entity.WorkerPref;
@@ -24,15 +24,16 @@ import uk.ac.tees.w9543466.pathlight.worker.repo.WorkerRepo;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RequestMapping("/worker")
 @RestController
 public class WorkerController extends BaseController {
     @Autowired
     private WorkerRepo workerRepo;
+    @Autowired
+    private EmployerRepo employerRepo;
     @Autowired
     private ApplicationRepo applicationRepo;
     @Autowired
@@ -66,9 +67,11 @@ public class WorkerController extends BaseController {
     }
 
     @GetMapping("/works")
-    public ResponseEntity<BaseResponse<List<Work>>> getWorks() {
-        var result = new ArrayList<Work>();
-        var email = getUserEmail();
+    public ResponseEntity<BaseResponse<WorkResponse>> getWorks() {
+        var result = new ArrayList<WorkItemResponse>();
+        Worker loggedInWorker = getLoggedInWorker();
+        var email = loggedInWorker.getEmail();
+        var workerId = loggedInWorker.getId();
         var preference = workerPrefRepo.findByEmail(email);
         if (preference.isEmpty()) {
             return BaseResponse.fail("Worker profile is incomplete", ErrorCode.SETUP_INCOMPLETE, HttpStatus.FORBIDDEN);
@@ -78,19 +81,36 @@ public class WorkerController extends BaseController {
             for (var work : works) {
                 boolean matches = LocationUtil.doesLocationMatch(work.getLat(), work.getLng(), pref.getLocationLat(), pref.getLocationLng(), pref.getRadius());
                 if (!matches) continue;
-                result.add(work);
+                Optional<Employer> employerOptional = employerRepo.findByEmail(work.getCreatedBy());
+                boolean applied = applicationRepo.existsByWorkIdAndWorkerId(work.getId(), workerId);
+                var mapped = mapper.map(work, WorkItemResponse.class);
+                employerOptional.ifPresent(employer -> {
+                    mapped.setEmployerName(employer.getFirstName() + " " + employer.getLastName());
+                    mapped.setApplied(applied);
+                });
+                result.add(mapped);
             }
-            return BaseResponse.ok(result);
+            return BaseResponse.ok(new WorkResponse(result));
         }
     }
 
     @GetMapping("/works/application")
-    public ResponseEntity<BaseResponse<List<Optional<Work>>>> getApplications() {
+    public ResponseEntity<BaseResponse<WorkerApplicationResponse>> getApplications() {
         var worker = getLoggedInWorker();
         var workerId = worker.getId();
         var list = applicationRepo.findAllByWorkerId(workerId);
-        var result = list.stream().map(application -> workRepo.findById(application.getWorkId()));
-        return BaseResponse.ok(result.collect(Collectors.toList()));
+        var result = mapper.map(list, WorkerApplicationItem[].class);
+        for (WorkerApplicationItem item : result) {
+            var work = workRepo.findById(item.getWorkId());
+            if (work.isPresent()) {
+                Work work1 = work.get();
+                var empEmail = work1.getCreatedBy();
+                var employer = employerRepo.findByEmail(empEmail);
+                item.setWork(work1);
+                employer.ifPresent(item::setEmployer);
+            }
+        }
+        return BaseResponse.ok(new WorkerApplicationResponse(Arrays.asList(result)));
     }
 
     @PostMapping("/works/application")
@@ -114,7 +134,7 @@ public class WorkerController extends BaseController {
             var pref = preference.get();
             boolean matches = LocationUtil.doesLocationMatch(work.getLat(), work.getLng(), pref.getLocationLat(), pref.getLocationLng(), pref.getRadius());
             if (!matches) {
-                String msg = "Your location does not match with the work's location, please try with another work";
+                String msg = "The work's location is out of bounds from your preferred location and radius, please try with another work";
                 return BaseResponse.fail(msg, ErrorCode.WORK_MISMATCH, HttpStatus.FORBIDDEN);
             }
             rate = rate == 0 ? work.getTotalRate() : rate;

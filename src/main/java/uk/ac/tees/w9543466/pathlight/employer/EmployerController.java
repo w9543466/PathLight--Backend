@@ -82,7 +82,7 @@ public class EmployerController extends BaseController {
     @PutMapping("/work")
     public ResponseEntity<BaseResponse<Void>> updateWork(@RequestBody WorkItem request) {
         String userEmail = getUserEmail();
-        var workEntity = workRepo.findByCreatedByAndId(userEmail, request.getWorkId()).orElseThrow(() -> new EntityNotFoundException("No work found with provided id"));
+        var workEntity = workRepo.findByCreatedByAndId(userEmail, request.getId()).orElseThrow(() -> new EntityNotFoundException("No work found with provided id"));
         var status = workEntity.getStatus();
         mapper.map(request, workEntity);
         workEntity.setCreatedBy(userEmail);

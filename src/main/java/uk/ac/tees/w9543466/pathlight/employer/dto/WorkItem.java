@@ -4,7 +4,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 public class WorkItem {
-    private long workId;
+    private long id;
     @NotBlank(message = "Title is required")
     private String title;
     private String skills;
@@ -17,12 +17,12 @@ public class WorkItem {
     private double totalRate;
     private String status;
 
-    public long getWorkId() {
-        return workId;
+    public long getId() {
+        return id;
     }
 
-    public void setWorkId(long workId) {
-        this.workId = workId;
+    public void setId(long id) {
+        this.id = id;
     }
 
     public String getTitle() {

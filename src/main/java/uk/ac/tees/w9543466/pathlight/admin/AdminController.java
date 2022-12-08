@@ -36,7 +36,7 @@ public class AdminController extends BaseController {
                 Worker worker = workerRepo.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("No worker found with provided email"));
                 worker.setVerified(request.isVerify());
                 workerRepo.save(worker);
-                msg = "Employer with email " + email + " " + (worker.isVerified() ? "verified" : "unverified");
+                msg = "Worker with email " + email + " " + (worker.isVerified() ? "verified" : "unverified");
                 break;
             case EMPLOYER:
                 Employer employer = employerRepo.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("No employer found with provided email"));

@@ -74,27 +74,27 @@ public class WorkerController extends BaseController {
         Worker loggedInWorker = getLoggedInWorker();
         var email = loggedInWorker.getEmail();
         var workerId = loggedInWorker.getId();
-        var preference = workerPrefRepo.findByEmail(email);
-        if (preference.isEmpty()) {
-            return BaseResponse.fail("Worker profile is incomplete", ErrorCode.SETUP_INCOMPLETE, HttpStatus.FORBIDDEN);
-        } else {
-            var pref = preference.get();
-            var works = workRepo.findAll();
-            for (var work : works) {
-                boolean matches = LocationUtil.doesLocationMatch(work.getLat(), work.getLng(), pref.getLocationLat(), pref.getLocationLng(), pref.getRadius());
-                if (!matches) continue;
-                Optional<Employer> employerOptional = employerRepo.findByEmail(work.getCreatedBy());
-                boolean applied = applicationRepo.existsByWorkIdAndWorkerId(work.getId(), workerId);
-                var mapped = mapper.map(work, WorkItemResponse.class);
-                employerOptional.ifPresent(employer -> {
-                    mapped.setEmployerName(employer.getFirstName() + " " + employer.getLastName());
-                    mapped.setApplied(applied);
-                });
-                result.add(mapped);
-            }
-            var sorted = result.stream().sorted(Comparator.comparingLong(WorkItemResponse::getStartTime)).collect(Collectors.toList());
-            return BaseResponse.ok(new WorkResponse(sorted));
+//        var preference = workerPrefRepo.findByEmail(email);
+//        if (preference.isEmpty()) {
+//            return BaseResponse.fail("Worker profile is incomplete", ErrorCode.SETUP_INCOMPLETE, HttpStatus.FORBIDDEN);
+//        }
+        //var pref = preference.get();
+        var works = workRepo.findAll();
+        for (var work : works) {
+//            boolean matches = LocationUtil.doesLocationMatch(work.getLat(), work.getLng(), pref.getLocationLat(), pref.getLocationLng(), pref.getRadius());
+//            if (!matches) continue;
+            Optional<Employer> employerOptional = employerRepo.findByEmail(work.getCreatedBy());
+            boolean applied = applicationRepo.existsByWorkIdAndWorkerId(work.getId(), workerId);
+            var mapped = mapper.map(work, WorkItemResponse.class);
+            employerOptional.ifPresent(employer -> {
+                mapped.setEmployerName(employer.getFirstName() + " " + employer.getLastName());
+                mapped.setApplied(applied);
+            });
+            result.add(mapped);
         }
+        var sorted = result.stream().sorted(Comparator.comparingLong(WorkItemResponse::getStartTime)).collect(Collectors.toList());
+        return BaseResponse.ok(new WorkResponse(sorted));
+
     }
 
     @GetMapping("/works/application")
@@ -130,28 +130,28 @@ public class WorkerController extends BaseController {
             return BaseResponse.fail("Worker not verified", ErrorCode.NOT_VERIFIED, HttpStatus.FORBIDDEN);
         }
         var work = workRepo.findById(workId).orElseThrow(() -> new EntityNotFoundException("No work found with provided id"));
-        var preference = workerPrefRepo.findByEmail(worker.getEmail());
-        if (preference.isEmpty()) {
-            return BaseResponse.fail("Worker preference is incomplete", ErrorCode.SETUP_INCOMPLETE, HttpStatus.FORBIDDEN);
-        } else {
-            var pref = preference.get();
-            boolean matches = LocationUtil.doesLocationMatch(work.getLat(), work.getLng(), pref.getLocationLat(), pref.getLocationLng(), pref.getRadius());
-            if (!matches) {
-                String msg = "The work's location is out of bounds from your preferred location and radius, please try with another work";
-                return BaseResponse.fail(msg, ErrorCode.WORK_MISMATCH, HttpStatus.FORBIDDEN);
-            }
-            rate = rate == 0 ? work.getTotalRate() : rate;
-            if (rate == 0) {
-                return BaseResponse.fail("Please provide a total rate for the entire service", ErrorCode.DATA_NOT_FOUND, HttpStatus.FORBIDDEN);
-            }
-            var application = new Application();
-            application.setWorkerId(workerId);
-            application.setWorkId(workId);
-            application.setRate(rate);
-            application.setApplicationStatus(ApplicationStatus.APPLIED);
-            applicationRepo.save(application);
-            return BaseResponse.ok("Application submitted");
+//        var preference = workerPrefRepo.findByEmail(worker.getEmail());
+//        if (preference.isEmpty()) {
+//            return BaseResponse.fail("Worker preference is incomplete", ErrorCode.SETUP_INCOMPLETE, HttpStatus.FORBIDDEN);
+//        }
+//        var pref = preference.get();
+//        boolean matches = LocationUtil.doesLocationMatch(work.getLat(), work.getLng(), pref.getLocationLat(), pref.getLocationLng(), pref.getRadius());
+//        if (!matches) {
+//            String msg = "The work's location is out of bounds from your preferred location and radius, please try with another work";
+//            return BaseResponse.fail(msg, ErrorCode.WORK_MISMATCH, HttpStatus.FORBIDDEN);
+//        }
+        rate = rate == 0 ? work.getTotalRate() : rate;
+        if (rate == 0) {
+            return BaseResponse.fail("Please provide a total rate for the entire service", ErrorCode.DATA_NOT_FOUND, HttpStatus.FORBIDDEN);
         }
+        var application = new Application();
+        application.setWorkerId(workerId);
+        application.setWorkId(workId);
+        application.setRate(rate);
+        application.setApplicationStatus(ApplicationStatus.APPLIED);
+        applicationRepo.save(application);
+        return BaseResponse.ok("Application submitted");
+
     }
 
     private Worker getLoggedInWorker() {

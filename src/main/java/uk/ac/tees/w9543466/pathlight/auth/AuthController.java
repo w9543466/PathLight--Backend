@@ -58,18 +58,27 @@ public class AuthController extends BaseController {
 
     @PostMapping("/login")
     public ResponseEntity<BaseResponse<Void>> login(@Valid @RequestBody LoginRequest request) {
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(request.getRole());
+        String requestedRole = request.getRole();
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(requestedRole);
         ArrayList<SimpleGrantedAuthority> arrayList = new ArrayList<>();
         arrayList.add(authority);
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword(), arrayList)
-        );
+
+        var authenticationToken = new UsernamePasswordAuthenticationToken(email, password, arrayList);
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        if (authentication.isAuthenticated()) {
-            return BaseResponse.ok("User signed-in successfully!.");
-        } else {
+
+        var userRoles = roleRepo.findByUserId(email);
+        boolean noneMatch = userRoles.stream().noneMatch(role -> role.getRole().equalsIgnoreCase("ROLE_" + requestedRole));
+        if (noneMatch) {
+            return BaseResponse.fail("Invalid user role", HttpStatus.UNAUTHORIZED);
+        }
+        if (!authentication.isAuthenticated()) {
             return BaseResponse.fail("Invalid credentials", HttpStatus.UNAUTHORIZED);
         }
+        return BaseResponse.ok("User signed-in successfully!.");
     }
 
     @PostMapping("/signup/worker")

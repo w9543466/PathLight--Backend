@@ -25,7 +25,9 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequestMapping("/worker")
 @RestController
@@ -90,7 +92,8 @@ public class WorkerController extends BaseController {
                 });
                 result.add(mapped);
             }
-            return BaseResponse.ok(new WorkResponse(result));
+            var sorted = result.stream().sorted(Comparator.comparingLong(WorkItemResponse::getStartTime)).collect(Collectors.toList());
+            return BaseResponse.ok(new WorkResponse(sorted));
         }
     }
 

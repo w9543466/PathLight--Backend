@@ -10,10 +10,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import uk.ac.tees.w9543466.pathlight.auth.repo.AuthRepo;
-import uk.ac.tees.w9543466.pathlight.auth.repo.RoleRepo;
 import uk.ac.tees.w9543466.pathlight.auth.entities.Roles;
 import uk.ac.tees.w9543466.pathlight.auth.entities.User;
+import uk.ac.tees.w9543466.pathlight.auth.repo.AuthRepo;
+import uk.ac.tees.w9543466.pathlight.auth.repo.RoleRepo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +35,12 @@ public class AuthProvider implements AuthenticationProvider {
         String password = authentication.getCredentials().toString();
 
         User user = repository.findByEmail(email).orElseThrow(() -> new BadCredentialsException("Details not found"));
+        List<GrantedAuthority> userRoles = getUserRoles(user.getEmail());
+
         if (encoder.matches(password, user.getPassword())) {
-            return new UsernamePasswordAuthenticationToken(email, password, getUserRoles(user.getEmail()));
+            return new UsernamePasswordAuthenticationToken(email, password, userRoles);
         } else {
-            throw new BadCredentialsException("Password mismatch");
+            throw new BadCredentialsException("Username or Password mismatch");
         }
     }
 

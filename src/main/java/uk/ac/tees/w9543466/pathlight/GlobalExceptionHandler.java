@@ -40,7 +40,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = BadCredentialsException.class)
     public ResponseEntity<BaseResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
-        return BaseResponse.fail("Invalid credentials", HttpStatus.UNAUTHORIZED);
+        return BaseResponse.fail(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(value = EntityNotFoundException.class)

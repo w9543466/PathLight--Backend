@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uk.ac.tees.w9543466.pathlight.ApplicationStatus;
 import uk.ac.tees.w9543466.pathlight.BaseController;
 import uk.ac.tees.w9543466.pathlight.BaseResponse;
 import uk.ac.tees.w9543466.pathlight.WorkStatus;
@@ -27,7 +28,8 @@ import javax.validation.Valid;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 @RequestMapping("/employer")
 @RestController
@@ -72,11 +74,11 @@ public class EmployerController extends BaseController {
     }
 
     @DeleteMapping("/work/{workId}")
-    public ResponseEntity<BaseResponse<Void>> cancelWork(@PathVariable(name = "workId") long workId) {
+    public ResponseEntity<BaseResponse<WorkDto>> cancelWork(@PathVariable(name = "workId") long workId) {
         var email = getUserEmail();
         Work work = workRepo.findByCreatedByAndId(email, workId).orElseThrow(() -> new EntityNotFoundException("No work found with provided id"));
         workRepo.deleteById(work.getId());
-        return BaseResponse.ok("Work deleted");
+        return getWorks();
     }
 
     @PutMapping("/work")
@@ -97,8 +99,8 @@ public class EmployerController extends BaseController {
         var email = getUserEmail();
         var works = workRepo.findByCreatedBy(email);
         var workList = mapper.map(works, WorkItem[].class);
-        List<WorkItem> workItems = Arrays.asList(workList);
-        return BaseResponse.ok(new WorkDto(workItems));
+        var result = Arrays.stream(workList).sorted(Comparator.comparingLong(WorkItem::getStartTime)).collect(Collectors.toList());
+        return BaseResponse.ok(new WorkDto(result));
     }
 
     @GetMapping("/work/{workId}/application")
@@ -116,5 +118,37 @@ public class EmployerController extends BaseController {
             }
         }
         return BaseResponse.ok(new ApplicationResponse(result));
+    }
+
+    @PostMapping("/work/application/{applicationId}/accept")
+    public ResponseEntity<BaseResponse<Void>> acceptApplications(@PathVariable(name = "applicationId") long applicationId) {
+        var application = applicationRepo.findById(applicationId).orElseThrow(() -> new EntityNotFoundException("No Application found with provided id"));
+        var work = workRepo.findById(application.getWorkId()).orElseThrow(() -> new EntityNotFoundException("No work found for this application"));
+        if (work.getStatus() != WorkStatus.NOT_STARTED) {
+            return BaseResponse.fail("Cannot accept. Work status is " + work.getStatus().getStatus(), HttpStatus.CONFLICT);
+        }
+        if (!work.getCreatedBy().equalsIgnoreCase(getUserEmail())) {
+            return BaseResponse.fail("Cannot accept. Not your work", HttpStatus.FORBIDDEN);
+        }
+        var list = applicationRepo.findAllByWorkId(application.getWorkId());
+        var found = list.stream().anyMatch(item -> item.getApplicationStatus() == ApplicationStatus.ACCEPTED);
+        if (found) {
+            return BaseResponse.fail("Cannot accept. Another application is already accepted for this job", HttpStatus.CONFLICT);
+        }
+        application.setApplicationStatus(ApplicationStatus.ACCEPTED);
+        applicationRepo.save(application);
+        return BaseResponse.ok("Application accepted");
+    }
+
+    @PostMapping("/work/application/{applicationId}/reject")
+    public ResponseEntity<BaseResponse<Void>> rejectApplications(@PathVariable(name = "applicationId") long applicationId) {
+        var application = applicationRepo.findById(applicationId).orElseThrow(() -> new EntityNotFoundException("No Application found with provided id"));
+        var work = workRepo.findById(application.getWorkId()).orElseThrow(() -> new EntityNotFoundException("No work found for this application"));
+        if (work.getCreatedBy().equalsIgnoreCase(getUserEmail())) {
+            return BaseResponse.fail("Cannot accept. Not your work", HttpStatus.FORBIDDEN);
+        }
+        application.setApplicationStatus(ApplicationStatus.REJECTED);
+        applicationRepo.save(application);
+        return BaseResponse.ok("Application accepted");
     }
 }

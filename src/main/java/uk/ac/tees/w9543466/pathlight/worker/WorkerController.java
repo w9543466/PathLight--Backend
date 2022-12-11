@@ -126,9 +126,9 @@ public class WorkerController extends BaseController {
         if (alreadyApplied) {
             return BaseResponse.fail("You have already applied for this work", ErrorCode.ALREADY_EXISTS, HttpStatus.FORBIDDEN);
         }
-        if (!worker.isVerified()) {
-            return BaseResponse.fail("Worker not verified", ErrorCode.NOT_VERIFIED, HttpStatus.FORBIDDEN);
-        }
+//        if (!worker.isVerified()) {
+//            return BaseResponse.fail("Worker not verified", ErrorCode.NOT_VERIFIED, HttpStatus.FORBIDDEN);
+//        }
         var work = workRepo.findById(workId).orElseThrow(() -> new EntityNotFoundException("No work found with provided id"));
 //        var preference = workerPrefRepo.findByEmail(worker.getEmail());
 //        if (preference.isEmpty()) {

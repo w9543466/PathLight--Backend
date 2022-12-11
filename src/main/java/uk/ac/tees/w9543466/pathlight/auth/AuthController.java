@@ -10,10 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import uk.ac.tees.w9543466.pathlight.BaseController;
 import uk.ac.tees.w9543466.pathlight.BaseResponse;
 import uk.ac.tees.w9543466.pathlight.ErrorCode;
@@ -27,17 +24,23 @@ import uk.ac.tees.w9543466.pathlight.auth.repo.AuthRepo;
 import uk.ac.tees.w9543466.pathlight.auth.repo.RoleRepo;
 import uk.ac.tees.w9543466.pathlight.employer.entity.Employer;
 import uk.ac.tees.w9543466.pathlight.employer.repo.EmployerRepo;
+import uk.ac.tees.w9543466.pathlight.mail.EmailDetails;
+import uk.ac.tees.w9543466.pathlight.mail.EmailService;
 import uk.ac.tees.w9543466.pathlight.worker.entity.Worker;
 import uk.ac.tees.w9543466.pathlight.worker.repo.WorkerRepo;
 
+import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @RestController
 public class AuthController extends BaseController {
 
+    @Autowired
+    private EmailService emailService;
     @Autowired
     private AuthRepo authRepo;
     @Autowired
@@ -50,6 +53,17 @@ public class AuthController extends BaseController {
     private AuthenticationManager authenticationManager;
     @Autowired
     private PasswordEncoder pwdEncoder;
+
+    public static String generateRandomPassword(int len) {
+        String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        Random rnd = new Random();
+
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            sb.append(AB.charAt(rnd.nextInt(AB.length())));
+        }
+        return sb.toString();
+    }
 
     @GetMapping("/")
     public ResponseEntity<BaseResponse<Void>> check() {
@@ -106,6 +120,21 @@ public class AuthController extends BaseController {
         return BaseResponse.success("User registered successfully as worker", HttpStatus.CREATED);
     }
 
+    @GetMapping("/forgotPassword/{emailId}")
+    public ResponseEntity<BaseResponse<Void>> forgotPassword(@PathVariable(name = "emailId") String emailId) {
+        var user = authRepo.findByEmail(emailId).orElseThrow(() -> new EntityNotFoundException("Invalid email id"));
+        String newPwd = generateRandomPassword(8);
+        String body = "Your new password is " + newPwd;
+        String subject = "Password reset!";
+        boolean sent = emailService.send(new EmailDetails(emailId, body, subject));
+        if (!sent) {
+            return BaseResponse.fail("Unable to reset password", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        user.setPassword(pwdEncoder.encode(newPwd));
+        authRepo.save(user);
+        return BaseResponse.ok("Password has been reset and sent to your registered email id");
+    }
+
     @PostMapping("/signup/employer")
     public ResponseEntity<BaseResponse<Void>> registerEmployer(@Valid @RequestBody EmployerRegisterRequest request) {
         var role = UserRole.EMPLOYER.getRole();
@@ -139,4 +168,5 @@ public class AuthController extends BaseController {
         newRole.setRole("ROLE_" + role);
         roleRepo.save(newRole);
     }
+
 }

@@ -24,3 +24,10 @@ spring:
       sql:
         database-name: pathlight
         instance-connection-name: trim-ruler-367314:us-central1:pathlight-instance
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: <Login User to SMTP server>
+    password: <Login password to SMTP server>
+    properties.mail.smtp.auth: true
+    properties.mail.smtp.starttls.enable: true

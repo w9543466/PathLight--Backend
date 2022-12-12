@@ -12,7 +12,6 @@ public class WorkerRegisterRequest {
     private String phone;
     @NotBlank(message = "Job title is mandatory")
     private String jobTitle;
-    @NotBlank(message = "Country is mandatory")
     private String country;
     @NotBlank(message = "Date of birth is mandatory")
     private String dob;

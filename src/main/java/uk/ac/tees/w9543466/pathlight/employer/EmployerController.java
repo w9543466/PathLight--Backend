@@ -137,6 +137,11 @@ public class EmployerController extends BaseController {
         }
         application.setApplicationStatus(ApplicationStatus.ACCEPTED);
         applicationRepo.save(application);
+        Double rate = application.getRate();
+        if (rate != null && rate != 0) {
+            work.setTotalRate(rate);
+            workRepo.save(work);
+        }
         return BaseResponse.ok("Application accepted");
     }
 
